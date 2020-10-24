@@ -29,7 +29,7 @@ app.get("*", function(req, res) {
 // POST api/notes path
 app.post("/api/notes", function(req, res) {
     let note = req.body,
-        noteID = noteData.length
+        noteID = `"${noteData.length}"`
     note.id = noteID;
     noteData.push(note);
     writeFile()
@@ -42,7 +42,7 @@ app.delete("/api/notes/:id", function(req, res) {
         newID = 0
     noteData = noteData.filter(noteIndex => noteIndex.id != noteID)
     for (noteIndex of noteData) {
-        noteIndex.id = newID
+        noteIndex.id = `"${newID}"`
         newID++;
     }
     writeFile()
