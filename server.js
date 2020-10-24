@@ -1,42 +1,62 @@
-const express = require("express");
-const path = require("path");
-const fs = require("fs");
-const app = express();
-const PORT = process.env.PORT || 3000;
+const
+    express = require("express"),
+    path = require("path"),
+    fs = require("fs"),
+    app = express(),
+    PORT = process.env.PORT || 3000;
 
-// Sets up the Express app to handle data parsing
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use(express.static("public"));
+let noteData = JSON.parse(fs.readFileSync("./db/db.json", "utf8"))
 
+app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
+app.use(express.static("public"))
 
-// GET `*` - Should return the `index.html` file
-app.get("/", function(req, res) {
-    res.sendFile(path.join(__dirname, "/public/index.html"));
-});
-
-// GET `/notes` - Should return the `notes.html` file.
+// GET notes path
 app.get("/notes", function(req, res) {
-    res.sendFile(path.join(__dirname, "/public/notes.html"));
+    res.sendFile(path.join(__dirname, "./public/notes.html"))
 });
 
-// The application should have a `db.json` file on the backend that will be used to store and retrieve notes using the `fs` module.
+// GET api/notes path
+app.get("/api/notes", function(req, res) {
+    return res.json(noteData);
+});
 
+// GET 404 path - directs to index
+app.get("*", function(req, res) {
+    res.sendFile(path.join(__dirname, "./public/index.html"))
+});
 
+// POST api/notes path
+app.post("/api/notes", function(req, res) {
+    let note = req.body,
+        noteID = noteData.length
+    note.id = noteID;
+    noteData.push(note);
+    writeFile()
+    res.json(noteData);
+});
 
+// DELETE api/notes/:id path
+app.delete("/api/notes/:id", function(req, res) {
+    let noteID = req.params.id,
+        newID = 0
+    noteData = noteData.filter(noteIndex => noteIndex.id != noteID)
+    for (noteIndex of noteData) {
+        noteIndex.id = newID
+        newID++;
+    }
+    writeFile()
+    res.json(noteData)
+});
 
-// The following API routes should be created:
+// function to write db.json file
+function writeFile() {
+    return fs.writeFileSync("./db/db.json", JSON.stringify(noteData), function(err) {
+        if (err) throw (err)
+    });
+}
 
-// GET `/api/notes` - Should read the `db.json` file and return all saved notes as JSON.
-
-// POST `/api/notes` - Should receive a new note to save on the request body, add it to the `db.json` file, and then return
-// the new note to the client.
-
-// DELETE `/api/notes/:id` - Should receive a query parameter containing the id of a note to delete. This means you'll need to 
-// find a way to give each note a unique `id` when it's saved. In order to delete a note, you'll need to read all notes from 
-// the `db.json` file, remove the note with the given `id` property, and then rewrite the notes to the `db.json` file.
-
-
+// listener
 app.listen(PORT, function() {
-    console.log("App listening on PORT: " + PORT);
+    console.log("App listening on PORT: " + PORT)
 });
